@@ -1,0 +1,8 @@
+* text=auto
+*.sh text eol=lf
+*.conf text eol=lf
+*.cfg text eol=lf
+*.vcl text eol=lf
+Caddyfile text eol=lf
+Makefile text eol=lf
+*.png binary

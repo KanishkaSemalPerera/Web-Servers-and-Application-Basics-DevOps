@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~/.m2/settings.xml  (on your laptop / CI agent, NOT in the Git repo of the app)
+  1) Send ALL downloads through Nexus (mirror)
+  2) Credentials for "mvn deploy"   - in CI, inject them from secrets as env vars
+-->
+<settings>
+  <mirrors>
+    <mirror>
+      <id>nexus</id>
+      <mirrorOf>*</mirrorOf>
+      <url>http://nexus.example.local:8081/repository/maven-public/</url>
+    </mirror>
+  </mirrors>
+
+  <servers>
+    <server>
+      <id>nexus-releases</id>                 <!-- must match <id> in pom.xml -->
+      <username>${env.NEXUS_USER}</username>
+      <password>${env.NEXUS_PASSWORD}</password>
+    </server>
+    <server>
+      <id>nexus-snapshots</id>
+      <username>${env.NEXUS_USER}</username>
+      <password>${env.NEXUS_PASSWORD}</password>
+    </server>
+  </servers>
+</settings>

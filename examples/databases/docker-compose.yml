@@ -1,0 +1,75 @@
+# Database playground: every engine from the guide on your laptop.
+#   docker compose up -d postgres redis          # start only what you need
+#   docker compose ps
+#   docker compose down -v                       # -v also deletes the data volumes
+#
+# Passwords here are for a LOCAL lab only.
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: appdb
+      MYSQL_USER: app
+      MYSQL_PASSWORD: apppass
+    ports: ["3306:3306"]
+    volumes: [mysql_data:/var/lib/mysql]
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: appdb
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: apppass
+    ports: ["5432:5432"]
+    volumes: [pg_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d appdb"]
+      interval: 5s
+      retries: 10
+
+  mongo:
+    image: mongo:7
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpass
+    ports: ["27017:27017"]
+    volumes: [mongo_data:/data/db]
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "100mb", "--maxmemory-policy", "allkeys-lru"]
+    ports: ["6379:6379"]
+
+  cassandra:
+    image: cassandra:4.1
+    ports: ["9042:9042"]
+    environment:
+      MAX_HEAP_SIZE: 512M
+      HEAP_NEWSIZE: 128M
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    ports:
+      - "5672:5672"      # AMQP (apps)
+      - "15672:15672"    # web UI  http://localhost:15672  guest / guest
+
+  kafka:
+    image: apache/kafka:3.8.0   # single-node KRaft mode (no ZooKeeper needed)
+    ports: ["9092:9092"]
+
+  # Applies examples/databases/flyway/sql/*.sql to Postgres, then exits
+  flyway:
+    image: flyway/flyway:10
+    command: -url=jdbc:postgresql://postgres:5432/appdb -user=app -password=apppass migrate
+    volumes: ["./flyway/sql:/flyway/sql"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles: ["migrate"]          # run with: docker compose --profile migrate run --rm flyway
+
+volumes:
+  mysql_data:
+  pg_data:
+  mongo_data:

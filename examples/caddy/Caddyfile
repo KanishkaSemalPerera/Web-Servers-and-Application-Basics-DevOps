@@ -1,0 +1,23 @@
+# Caddy gets and renews HTTPS certificates AUTOMATICALLY for real domains.
+# Run:      caddy run --config Caddyfile
+# Validate: caddy validate --config Caddyfile
+
+# Static site
+example.com {
+	root * /var/www/example
+	file_server
+	encode gzip zstd
+}
+
+# Reverse proxy + load balancing
+app.example.com {
+	reverse_proxy 10.0.0.11:8080 10.0.0.12:8080 {
+		lb_policy least_conn
+		health_uri /health
+	}
+}
+
+# Local testing (Caddy uses its own local CA for https://localhost)
+localhost:8443 {
+	respond "Hello from Caddy"
+}

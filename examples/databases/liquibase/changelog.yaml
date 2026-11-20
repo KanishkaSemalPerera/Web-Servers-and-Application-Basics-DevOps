@@ -1,0 +1,43 @@
+# Liquibase changelog: the same schema as the Flyway example, in YAML.
+#   liquibase --changelog-file=changelog.yaml \
+#             --url=jdbc:postgresql://localhost:5432/appdb --username=app --password=$DB_PASSWORD update
+#   liquibase ... status          # pending changesets
+#   liquibase ... rollback-count 1
+# Applied changesets are recorded in the DATABASECHANGELOG table.
+
+databaseChangeLog:
+  - changeSet:
+      id: 1-create-users
+      author: devops-intern
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column: { name: id, type: BIGINT, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: email, type: VARCHAR(255), constraints: { nullable: false, unique: true } }
+              - column: { name: full_name, type: VARCHAR(255), constraints: { nullable: false } }
+              - column: { name: created_at, type: TIMESTAMP, defaultValueComputed: CURRENT_TIMESTAMP }
+
+  - changeSet:
+      id: 2-create-orders
+      author: devops-intern
+      changes:
+        - createTable:
+            tableName: orders
+            columns:
+              - column: { name: id, type: BIGINT, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: user_id, type: BIGINT, constraints: { nullable: false, foreignKeyName: fk_orders_user, references: users(id) } }
+              - column: { name: total, type: NUMERIC(10,2), constraints: { nullable: false } }
+              - column: { name: status, type: VARCHAR(20), defaultValue: NEW }
+
+  - changeSet:
+      id: 3-add-orders-user-index
+      author: devops-intern
+      changes:
+        - createIndex:
+            tableName: orders
+            indexName: idx_orders_user_id
+            columns:
+              - column: { name: user_id }
+      rollback:
+        - dropIndex: { tableName: orders, indexName: idx_orders_user_id }
